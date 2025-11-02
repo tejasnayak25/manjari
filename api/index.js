@@ -4,54 +4,62 @@ let express = require("express");
 let app = express();
 let archiver = require("archiver");
 const multer = require('multer');
+const { GoogleGenAI } = require("@google/genai");
 
-const {
-    GoogleGenerativeAI,
-    HarmCategory,
-    HarmBlockThreshold,
-  } = require("@google/generative-ai");
-  const { GoogleAIFileManager } = require("@google/generative-ai/server");
-  
-  const apiKey = process.env.GOOGLE_AI_API;
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const fileManager = new GoogleAIFileManager(apiKey);
+const apiKey = process.env.GOOGLE_AI_API;
+const ai = new GoogleGenAI({ apiKey });
 
-  const ralpha_generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 8192,
-    responseMimeType: "application/json",
-  };
-  
-  const random_alpha_model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: ralpha_generationConfig,
-    systemInstruction: "Provide an array of 10 random letters in random order for learning the language with 4 options each. give direct response. response format {letters: [{native, target, options}]}",
+async function generateContent(model, contents, config) {
+  const response = await ai.models.generateContent({
+    model,
+    contents,
+    config,
   });
+  return response.text;
+}
 
-  const random_word_model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: ralpha_generationConfig,
-    systemInstruction: "Provide an array of 10 random words in random order for learning the language with 4 options each. give direct response. response format {words: [{native, target, options}]}",
-  });
+const ralpha_generationConfig = {
+  temperature: 1,
+  topP: 0.95,
+  topK: 40,
+  maxOutputTokens: 8192,
+  responseMimeType: "application/json",
+};
 
-  const sentence_model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: ralpha_generationConfig,
-    systemInstruction: "Provide an array of 10 random sentences in random order for learning the language with 4 options each. give direct response. response format {sentences: [{native, target, options}]}",
-  });
+const random_alpha_model = async () =>
+  await generateContent(
+    "gemini-2.0-flash",
+    "Provide an array of 10 random letters in random order for learning the language with 4 options each. Response format: {letters: [{native, target, options}]}.",
+    ralpha_generationConfig
+  );
 
-  const trace_model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    systemInstruction: "detect the character in the image with respect to the target language. give direct answer. format {letter: string}",
-  });
+const random_word_model = async () =>
+  await generateContent(
+    "gemini-2.0-flash",
+    "Provide an array of 10 random words in random order for learning the language with 4 options each. Response format: {words: [{native, target, options}]}.",
+    ralpha_generationConfig
+  );
 
-  const info_model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: ralpha_generationConfig,
-    systemInstruction: "provide an array of 10 elements to teach the alphabets, words, and phrases related to the target language in the native language based on the user's experience. give direct answer. format {data: [sentence, sentence, ...]}",
-  });
+const sentence_model = async () =>
+  await generateContent(
+    "gemini-2.0-flash",
+    "Provide an array of 10 random sentences in random order for learning the language with 4 options each. Response format: {sentences: [{native, target, options}]}.",
+    ralpha_generationConfig
+  );
+
+const trace_model = async () =>
+  await generateContent(
+    "gemini-2.0-flash",
+    "Detect the character in the image with respect to the target language. Format: {letter: string}.",
+    {}
+  );
+
+const info_model = async () =>
+  await generateContent(
+    "gemini-2.0-flash",
+    "Provide an array of 10 elements to teach the alphabets, words, and phrases related to the target language in the native language based on the user's experience. Format: {data: [sentence, sentence, ...]}.",
+    ralpha_generationConfig
+  );
 
 let zipDir = path.join(__dirname, "..", "zipfiles");
 
