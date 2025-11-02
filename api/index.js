@@ -9,15 +9,6 @@ const { GoogleGenAI } = require("@google/genai");
 const apiKey = process.env.GOOGLE_AI_API;
 const ai = new GoogleGenAI({ apiKey });
 
-async function generateContent(model, contents, config) {
-  const response = await ai.models.generateContent({
-    model,
-    contents,
-    config,
-  });
-  return response.text;
-}
-
 const ralpha_generationConfig = {
   temperature: 1,
   topP: 0.95,
@@ -26,39 +17,66 @@ const ralpha_generationConfig = {
   responseMimeType: "application/json",
 };
 
+const SYSTEM_INSTRUCTIONS = {
+  RANDOM_ALPHA: "Generate 10 random letters with 4 options each for learning purposes. Format: {letters: [{native, target, options}]}",
+  RANDOM_WORD: "Generate 10 random words with 4 options each for learning purposes. Format: {words: [{native, target, options}]}",
+  RANDOM_SENTENCE: "Generate 10 random sentences with 4 options each for learning purposes. Format: {sentences: [{native, target, options}]}",
+  TRACE: "Identify the character in the provided image based on the target language. Format: {letter: string}",
+  INFO: "Generate 10 elements to teach alphabets, words, and phrases in the target language based on user experience. Format: {data: [sentence, sentence, ...]}"
+};
+
+async function generateContent(model, systemInstruction, config, contents = []) {
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents,
+      config: {
+        ...config,
+        systemInstruction
+      }
+    });
+    return response.text;
+  } catch (error) {
+    console.error("Error generating content:", error);
+    throw new Error("Content generation failed");
+  }
+}
+
 const random_alpha_model = async () =>
   await generateContent(
-    "gemini-2.0-flash",
-    "Provide an array of 10 random letters in random order for learning the language with 4 options each. Response format: {letters: [{native, target, options}]}.",
+    "gemini-2.5-flash",
+    SYSTEM_INSTRUCTIONS.RANDOM_ALPHA,
     ralpha_generationConfig
   );
 
 const random_word_model = async () =>
   await generateContent(
-    "gemini-2.0-flash",
-    "Provide an array of 10 random words in random order for learning the language with 4 options each. Response format: {words: [{native, target, options}]}.",
+    "gemini-2.5-flash",
+    SYSTEM_INSTRUCTIONS.RANDOM_WORD,
     ralpha_generationConfig
   );
 
 const sentence_model = async () =>
   await generateContent(
-    "gemini-2.0-flash",
-    "Provide an array of 10 random sentences in random order for learning the language with 4 options each. Response format: {sentences: [{native, target, options}]}.",
+    "gemini-2.5-flash",
+    SYSTEM_INSTRUCTIONS.RANDOM_SENTENCE,
     ralpha_generationConfig
   );
 
-const trace_model = async () =>
+const trace_model = async (imageData) =>
   await generateContent(
-    "gemini-2.0-flash",
-    "Detect the character in the image with respect to the target language. Format: {letter: string}.",
-    {}
+    "gemini-2.5-flash",
+    SYSTEM_INSTRUCTIONS.TRACE,
+    {},
+    [imageData]
   );
 
-const info_model = async () =>
+const info_model = async (userExperienceData) =>
   await generateContent(
-    "gemini-2.0-flash",
-    "Provide an array of 10 elements to teach the alphabets, words, and phrases related to the target language in the native language based on the user's experience. Format: {data: [sentence, sentence, ...]}.",
-    ralpha_generationConfig
+    "gemini-2.5-flash",
+    SYSTEM_INSTRUCTIONS.INFO,
+    ralpha_generationConfig,
+    [userExperienceData]
   );
 
 let zipDir = path.join(__dirname, "..", "zipfiles");
@@ -176,6 +194,7 @@ app.route("/ai/random-alpha")
             content: response.response.text()
         })
     } catch(e) {
+        console.log(e);
         res.send({
             status:500
         });
