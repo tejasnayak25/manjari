@@ -47,7 +47,7 @@ const random_alpha_model = async (data) =>
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.RANDOM_ALPHA,
     ralpha_generationConfig,
-    [data]
+    [JSON.stringify(data)]
   );
 
 const random_word_model = async (data) =>
@@ -55,7 +55,7 @@ const random_word_model = async (data) =>
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.RANDOM_WORD,
     ralpha_generationConfig,
-    [data]
+    [JSON.stringify(data)]
   );
 
 const sentence_model = async (data) =>
@@ -63,7 +63,7 @@ const sentence_model = async (data) =>
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.RANDOM_SENTENCE,
     ralpha_generationConfig,
-    [data]
+    [JSON.stringify(data)]
   );
 
 const trace_model = async (imageData) =>
