@@ -79,7 +79,7 @@ const info_model = async (userExperienceData) =>
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.INFO,
     ralpha_generationConfig,
-    [userExperienceData]
+    [JSON.stringify(userExperienceData)]
   );
 
 let zipDir = path.join(__dirname, "..", "zipfiles");
