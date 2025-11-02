@@ -68,7 +68,7 @@ const trace_model = async (imageData) =>
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.TRACE,
     {},
-    [imageData]
+    imageData
   );
 
 const info_model = async (userExperienceData) =>
@@ -188,11 +188,11 @@ app.route("/ai/random-alpha")
     let data = req.body;
 
     try {
-        let response = await random_alpha_model.generateContent(JSON.stringify(data));
+        let response = await random_alpha_model();
         res.send({
             status: 200,
-            content: response.response.text()
-        })
+            content: response
+        });
     } catch(e) {
         console.log(e);
         res.send({
@@ -206,11 +206,11 @@ app.route("/ai/random-word")
     let data = req.body;
 
     try {
-        let response = await random_word_model.generateContent(JSON.stringify(data));
+        let response = await random_word_model();
         res.send({
             status: 200,
-            content: response.response.text()
-        })
+            content: response
+        });
     } catch(e) {
         res.send({
             status:500
@@ -223,11 +223,11 @@ app.route("/ai/random-sentence")
     let data = req.body;
 
     try {
-        let response = await sentence_model.generateContent(JSON.stringify(data));
+        let response = await sentence_model();
         res.send({
             status: 200,
-            content: response.response.text()
-        })
+            content: response
+        });
     } catch(e) {
         res.send({
             status:500
@@ -240,11 +240,11 @@ app.route("/ai/info-time")
     let data = req.body;
 
     try {
-        let response = await info_model.generateContent(JSON.stringify(data));
+        let response = await info_model(data);
         res.send({
             status: 200,
-            content: response.response.text()
-        })
+            content: response
+        });
     } catch(e) {
         res.send({
             status:500
@@ -266,15 +266,12 @@ app.post("/ai/trace", upload.single('file'), async (req, res) => {
     try {
         let file = req.file;
         let uploadResponse = await uploadToGemini(file.path, file.mimetype);
-        let response = await trace_model.generateContent([
-            {
-              fileData: {
-                mimeType: uploadResponse.mimeType,
-                fileUri: uploadResponse.uri,
-              },
-            },
-            { text: JSON.stringify(data) },
-          ]);
+        let response = await trace_model([
+            createUserContent([
+                JSON.stringify(data),
+                createPartFromUri(uploadResponse.uri, uploadResponse.mimeType),
+            ]),
+        ]);
         res.send({
             status: 200,
             content: response.response.text()
