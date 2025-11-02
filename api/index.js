@@ -42,25 +42,28 @@ async function generateContent(model, systemInstruction, config, contents = []) 
   }
 }
 
-const random_alpha_model = async () =>
+const random_alpha_model = async (data) =>
   await generateContent(
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.RANDOM_ALPHA,
-    ralpha_generationConfig
+    ralpha_generationConfig,
+    [data]
   );
 
-const random_word_model = async () =>
+const random_word_model = async (data) =>
   await generateContent(
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.RANDOM_WORD,
-    ralpha_generationConfig
+    ralpha_generationConfig,
+    [data]
   );
 
-const sentence_model = async () =>
+const sentence_model = async (data) =>
   await generateContent(
     "gemini-2.5-flash",
     SYSTEM_INSTRUCTIONS.RANDOM_SENTENCE,
-    ralpha_generationConfig
+    ralpha_generationConfig,
+    [data]
   );
 
 const trace_model = async (imageData) =>
@@ -188,7 +191,7 @@ app.route("/ai/random-alpha")
     let data = req.body;
 
     try {
-        let response = await random_alpha_model();
+        let response = await random_alpha_model(data);
         res.send({
             status: 200,
             content: response
@@ -206,7 +209,7 @@ app.route("/ai/random-word")
     let data = req.body;
 
     try {
-        let response = await random_word_model();
+        let response = await random_word_model(data);
         res.send({
             status: 200,
             content: response
@@ -223,7 +226,7 @@ app.route("/ai/random-sentence")
     let data = req.body;
 
     try {
-        let response = await sentence_model();
+        let response = await sentence_model(data);
         res.send({
             status: 200,
             content: response
